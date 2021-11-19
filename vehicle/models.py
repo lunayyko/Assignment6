@@ -12,6 +12,7 @@ class EKScooter(models.Model):
         related_name='ek_scooters',
         null=True,
     )
+    name = models.CharField(max_length=20, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
