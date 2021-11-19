@@ -1,0 +1,44 @@
+version: "3"
+services:
+  deer-backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-dev
+    container_name: deer-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - deer-db
+    restart: always
+    environment:
+      SQL_HOST: deer-db
+      SQL_PORT: 3306
+      SQL_DATABASE: deer_db
+      SQL_USER: deer_user
+      SQL_PASSWORD: deer_password
+      DJANGO_SETTINGS_MODULE: deer.settings.dev_local
+    command:
+      - bash
+      - -c
+      - |
+        python manage.py wait_for_db -t 120
+        python manage.py migrate
+        python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/usr/src/app/
+  deer-db:
+    image: mysql
+    container_name: deer-db
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./db_data:/var/lib/mysql:rw
+    environment:
+      MYSQL_DATABASE: deer_db
+      MYSQL_USER: deer_user
+      MYSQL_PASSWORD: deer_password
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
