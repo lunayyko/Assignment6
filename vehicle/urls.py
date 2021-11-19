@@ -1,13 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
 
-from vehicle.views import DeerViewSet
-
-app_name = 'vehicle'
+from vehicle.views import VehicleViewSet
 
 router = SimpleRouter()
 
-router.register('deers', DeerViewSet, basename='vehicles')
+router.register('deer', VehicleViewSet, basename='vehicles')
 
 urlpatterns = [
     path('', include((router.urls)))
