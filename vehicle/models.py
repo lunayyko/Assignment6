@@ -38,3 +38,6 @@ class BoardingLog(models.Model):
     use_end_at = models.DateTimeField()
     in_use = models.BooleanField()
     fee = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
