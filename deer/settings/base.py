@@ -31,6 +31,7 @@ PROJECT_APPS = [
     'user',
     'area',
     'vehicle',
+    'commands',
 ]
 
 
@@ -184,5 +185,3 @@ CORS_ALLOW_HEADERS = (
     'x-csrftoken',
     'x-requested-with',
 )
-
-
