@@ -28,12 +28,16 @@ ALLOWED_HOSTS = []
 
 # Application definition
 PROJECT_APPS = [
+    'user',
+    'area',
+    'vehicle',
 ]
 
 
 THIRD_PARTY_APPS = [
     'corsheaders',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_extensions',
     'debug_toolbar',
     'django_filters',
@@ -42,7 +46,7 @@ THIRD_PARTY_APPS = [
 
 
 INSTALLED_APPS = [
-    # 'django.contrib.admin',
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -67,6 +71,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]  + THIRD_PARTY_MIDDLEWARE
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}
+
 ROOT_URLCONF = 'deer.urls'
 
 TEMPLATES = [
@@ -90,11 +100,13 @@ WSGI_APPLICATION = 'deer.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.contrib.gis.db.backends.mysql',
+        'HOST': 'localhost',
+        'NAME': 'deer',
+        'USER': 'user-deer',
+        'PASSWORD': 'password-deer',
     }
 }
 
@@ -172,3 +184,5 @@ CORS_ALLOW_HEADERS = (
     'x-csrftoken',
     'x-requested-with',
 )
+
+
