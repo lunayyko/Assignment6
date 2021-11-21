@@ -7,16 +7,19 @@
     - [wanted 채용공고 링크](https://www.wanted.co.kr/wd/59051)
 
 ## Members
-| 이름 | github                                    | 담당 기능              |
-|-----|--------------------------------------------|-------------------------|
-|김태우 |[jotasic](https://github.com/jotasic)       | |
-|고유영 |[lunayyko](https://github.com/lunayyko)     | |
-|박지원 |[jiwon5304](https://github.com/jiwon5304)   | |
-|최신혁 |[shchoi94](https://github.com/shchoi94)     | |
-|박세원 |[sw-develop](https://github.com/sw-develop) | |
+| 이름 | github                                    | 담당 기능      |
+|-----|--------------------------------------------|------------ |
+|김태우 |[jotasic](https://github.com/jotasic)       | 배포, 퀵보드리스트 |
+|고유영 |[lunayyko](https://github.com/lunayyko)     | 퀵보드대여     |
+|박지원 |[jiwon5304](https://github.com/jiwon5304)   | 퀵보드반납     |
+|최신혁 |[shchoi94](https://github.com/shchoi94)     | 퀵보드대여, 반납|
+|박세원 |[sw-develop](https://github.com/sw-develop) | 개인사정으로 불참|
 
 ## 과제 내용
-
+<details>
+<summary>과제내용 보기</summary>
+<div markdown="1">
+  
 ### **[필수 포함 사항]**
 - READ.ME 작성
     - 프로젝트 빌드, 자세한 실행 방법 명시
@@ -82,7 +85,8 @@ forbidden_area_id (반납금지구역 아이디로 고유한 값)
 forbidden_area_boundary (반납금지구역을 표시하는 MySQL spatial data로 POLYGON)
 forbidden_area_coords (반납금지구역의 경계를 표시하는 위도, 경도로 이루어진 점의 리스트)
 ```
-
+</div>
+</details>
 
 ## 사용 기술 및 tools
 > - Back-End :  <img src="https://img.shields.io/badge/Python 3.8-3776AB?style=for-the-badge&logo=Python&logoColor=white"/>&nbsp;<img src="https://img.shields.io/badge/Django 3.2-092E20?style=for-the-badge&logo=Django&logoColor=white"/>&nbsp;<img src="https://img.shields.io/badge/Mysql 8.0-4479A1?style=for-the-badge&logo=Mysql&logoColor=white"/>
@@ -90,26 +94,52 @@ forbidden_area_coords (반납금지구역의 경계를 표시하는 위도, 경�
 > - ETC :  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=Git&logoColor=white"/>&nbsp;<img src="https://img.shields.io/badge/Github-181717?style=for-the-badge&logo=Github&logoColor=white"/>&nbsp;<img src="https://img.shields.io/badge/SWAGGER-5B8C04?style=for-the-badge&logo=Swagger&logoColor=white"/>&nbsp;
 
 ## 모델링
+![image](https://user-images.githubusercontent.com/8219812/142760881-8545f6f7-1068-4fd2-91fe-4ccb76ad9a61.png)
 
 
 ## API
+- [Swagger](http://18.188.189.173:8051/docs/swagger/)
 
 ## 구현 기능
+- 기본 기능인 퀵보드 대여 및 반납 기능만 구현하였고, 추가기능인 할인, 패널티 적용은 구현하지 못하였습니다.
 
+### 퀵보드 대여 기능
+
+### 퀵보드 반납 기능
+
+### 퀵보드 List 출력
+- limit, offset pagination을 적용하였고, Query String이 입력되지 않아도, limit가 기본적으로 20으로 적용되도록 하였습니다.
 
 ## 배포정보
----
 |구분   |  정보          |비고|
 |-------|----------------|----|
 |배포플랫폼 | AWS EC2    |    |
-|API 주소 |            |    |
+|API 주소 |http://18.188.189.173:8051/          |    |
 
 
 ## API TEST 방법
-1. 우측 링크를 클릭해서 swagger로 들어갑니다. [링크]()
+1. 우측 링크를 클릭해서 swagger로 들어갑니다. [링크](http://18.188.189.173:8051/docs/swagger/)
+
+2. 회원가입과 로그인을 진행해서 Access token을 획득합니다.
+
+![image](https://user-images.githubusercontent.com/8219812/142761053-766dfa92-d149-4f86-a744-cb83179b130a.png)
+
+
+3. 해당 Token을 우측 상단에 있는 `Authorize`버튼을 클릭한 후, 아래 이미지를 참고하여 입력합니다 (Token xxxxxxxxx)
+
+![image](https://user-images.githubusercontent.com/8219812/142761033-67614029-8746-4318-8948-d4664a7b02ce.png)
+
+
+4. 퀵보드 대여 및 반납 Test를 진행합니다.
+
+![image](https://user-images.githubusercontent.com/8219812/142761079-dd7505f3-cbb3-46dd-972b-e6f2ae063db5.png)
 
 
 ## 설치 및 실행 방법
+<details>
+<summary>설치 및 실행 방법 자세히 보기</summary>
+<div markdown="1">
+  
 ###  Local 개발 및 테스트용
 
 1. 해당프로젝트를 clone 하고, 프로젝트 폴더로 들어간다.
@@ -125,15 +155,12 @@ forbidden_area_coords (반납금지구역의 경계를 표시하는 위도, 경�
     pip install -r requirements.txt
     ```
 
-3. 환경 설정 파일 복사하고 해당 디렉토리로 이동해서 내용을 수정한다.
-
-
-4. db를 table 구조를 최신 model에 맞게 설정한다.
+3. db를 table 구조를 최신 model에 맞게 설정한다.
     ```bash
     python manage.py migrate
     ```
 
-5. 서버를 실행한다.
+4. 서버를 실행한다.
     ```bash
     python manage.py runserver 0.0.0.0:8000
     ```
@@ -144,11 +171,80 @@ forbidden_area_coords (반납금지구역의 경계를 표시하는 위도, 경�
   git clone https://github.com/Wanted-Preonboarding-Backend-1st-G5/Assignment6
   cd Assignment6
   ```
-
+2. docker를 실행해서 서버를 구동한다.
+  ```bash
+  docker-compose -f ./docker-compose-deploy.yml up --build -d
+  ```
+</div>
+</details>
 
 ## 폴더 구조
 ```bash
-
+📦 Assignment6
+ ┣ 📂 area
+ ┃ ┣ 📂 migrations
+ ┃ ┃ ┣ 📜 0001_initial.py
+ ┃ ┃ ┗ 📜 __init__.py
+ ┃ ┣ 📜 __init__.py
+ ┃ ┣ 📜 admin.py
+ ┃ ┣ 📜 apps.py
+ ┃ ┣ 📜 models.py
+ ┃ ┣ 📜 tests.py
+ ┃ ┗ 📜 views.py
+ ┣ 📂 commands
+ ┃ ┣ 📂 management
+ ┃ ┃ ┣ 📂 commands
+ ┃ ┃ ┃ ┣ 📜 __init__.py
+ ┃ ┃ ┃ ┗ 📜 wait_for_db.py
+ ┃ ┃ ┗ 📜 __init__.py
+ ┃ ┣ 📜 __init__.py
+ ┃ ┗ 📜 apps.py
+ ┣ 📂 config
+ ┃ ┗ 📂 nginx
+ ┃ ┃ ┗ 📜 nginx.conf
+ ┣ 📂 deer
+ ┃ ┣ 📂 settings
+ ┃ ┃ ┣ 📜 base.py
+ ┃ ┃ ┣ 📜 deploy.py
+ ┃ ┃ ┗ 📜 dev_local.py
+ ┃ ┣ 📜 __init__.py
+ ┃ ┣ 📜 asgi.py
+ ┃ ┣ 📜 urls.py
+ ┃ ┗ 📜 wsgi.py
+ ┣ 📂 user
+ ┃ ┣ 📂 migrations
+ ┃ ┃ ┗ 📜 __init__.py
+ ┃ ┣ 📜 __init__.py
+ ┃ ┣ 📜 admin.py
+ ┃ ┣ 📜 apps.py
+ ┃ ┣ 📜 models.py
+ ┃ ┣ 📜 serializers.py
+ ┃ ┣ 📜 tests.py
+ ┃ ┣ 📜 urls.py
+ ┃ ┗ 📜 views.py
+ ┣ 📂 vehicle
+ ┃ ┣ 📂 migrations
+ ┃ ┃ ┣ 📜 0001_initial.py
+ ┃ ┃ ┣ 📜 0002_auto_20211121_1149.py
+ ┃ ┃ ┣ 📜 0003_auto_20211121_1319.py
+ ┃ ┃ ┗ 📜 __init__.py
+ ┃ ┣ 📜 __init__.py
+ ┃ ┣ 📜 admin.py
+ ┃ ┣ 📜 apps.py
+ ┃ ┣ 📜 models.py
+ ┃ ┣ 📜 serializers.py
+ ┃ ┣ 📜 tests.py
+ ┃ ┣ 📜 urls.py
+ ┃ ┗ 📜 views.py
+ ┣ 📜 .gitignore
+ ┣ 📜 Dockerfile-deploy
+ ┣ 📜 Dockerfile-dev
+ ┣ 📜 README.md
+ ┣ 📜 docker-compose-deploy.yml
+ ┣ 📜 docker-compose-dev.yml
+ ┣ 📜 manage.py
+ ┣ 📜 pull_request_template.md
+ ┗ 📜 requirements.txt
 ```
 
 
