@@ -1,18 +1,19 @@
 import datetime
 
-from rest_framework import status, viewsets
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework                  import status, viewsets
+from rest_framework.response         import Response
+from rest_framework.decorators       import action
+from rest_framework.permissions      import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 
-from django.db import IntegrityError
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.db                       import IntegrityError
+from django.contrib.auth             import authenticate, login, logout
+from django.contrib.auth.models      import User
 
-from area.models import Area
-from user.serializers import UserSerializer
-from vehicle.models import Deer, BoardingLog
+from area.models                     import Area
+from user.serializers                import UserSerializer
+from vehicle.serializers             import BoardingLogSerializer
+from vehicle.models                  import Deer, BoardingLog
 
 
 class UserViewSet(viewsets.GenericViewSet):
@@ -120,13 +121,19 @@ class UserViewSet(viewsets.GenericViewSet):
                 in_use=True,
                 use_start_at=datetime.datetime.now()
             )
-            # todo: response
-            return Response({"message": "대여성공"})
+
+            return Response(BoardingLogSerializer(log).data, status=status.HTTP_200_OK)
 
         if request.method == "DELETE":
-            # todo: use_end_lat, use_end_lng validate
+            
+            if (request.data.get('use_end_lat') is not None) or (request.data.get('use_end_lng') is not None):
+                return Response({"error": "Location not confirmed"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if request.data.get('use_end_lat') < 0 or request.data.get('use_end_lng')  < 0:
+                return Response({"error": "Invalid value"}, status=status.HTTP_400_BAD_REQUEST)
+                
             use_end_lat = request.data.get('use_end_lat')
-            use_end_lng = request.data.get('use_end_lng')
+            use_end_lng = request.data.get('use_end_lng')   
 
             # 반납 가능한 상태 validate
             try:
@@ -150,5 +157,5 @@ class UserViewSet(viewsets.GenericViewSet):
             log.use_end_at = use_end_at
             log.fee = fee
             log.save()
-            # todo: response
-            return Response({"message": "반납성공"})
+
+            return Response(BoardingLogSerializer(log).data, status=status.HTTP_200_OK)
