@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -8,8 +10,9 @@ from django.db import IntegrityError
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
+from area.models import Area
 from user.serializers import UserSerializer
-from vehicle.models import Deer
+from vehicle.models import Deer, BoardingLog
 
 
 class UserViewSet(viewsets.GenericViewSet):
@@ -73,18 +76,79 @@ class UserViewSet(viewsets.GenericViewSet):
         return Response()
 
     @action(detail=True, methods=['POST', 'DELETE'])
-    def deer(self, request, user_id):
+    def deer(self, request, pk):
         """
-        POST: 대여
-        DELETE: 반납
+        대여: POST /users/{user_id}/deer/
+            data params
+            - deer_name
 
-        /users/{user_id}/deer/
-
-        data params:
-        - deer_name:
+        반납: DELETE /users/{user_id}/deer/
+            data params
+            - deer_name
+            - use_end_lat
+            - use_end_lng
         """
+        # authorization validate
+        if int(pk) != request.user.id:
+            return Response({"error": "Not Authorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        # deer_name validate
+        deer_name = request.data.get('deer_name')
+        try:
+            deer = Deer.objects.get(name=deer_name)
+        except Deer.DoesNotExist:
+            return Response({"error": f"deer_name:{deer_name} does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
         if request.method == "POST":
-            pass
-        if request.method == "DELETE":
-            pass
 
+            is_user_already_use = BoardingLog.objects.filter(
+                in_use=True,
+                user=request.user
+            ).exists()
+            is_deer_already_use = BoardingLog.objects.filter(
+                in_use=True,
+                deer=deer
+            ).exists()
+
+            # 대여가능 상태 validate
+            if is_user_already_use or is_deer_already_use:
+                return Response({"error": "user or deer already use"}, status=status.HTTP_400_BAD_REQUEST)
+
+            log = BoardingLog.objects.create(
+                user=request.user,
+                deer=deer,
+                in_use=True,
+                use_start_at=datetime.datetime.now()
+            )
+            # todo: response
+            return Response({"message": "대여성공"})
+
+        if request.method == "DELETE":
+            # todo: use_end_lat, use_end_lng validate
+            use_end_lat = request.data.get('use_end_lat')
+            use_end_lng = request.data.get('use_end_lng')
+
+            # 반납 가능한 상태 validate
+            try:
+                log = BoardingLog.objects.get(
+                    in_use=True,
+                    user=request.user,
+                    deer=deer,
+                )
+            except BoardingLog.DoesNotExist:
+                return Response({"error": f"user not use deer:{deer_name}"}, status=status.HTTP_400_BAD_REQUEST)
+
+            area = Area.objects.get(id=deer.area_id)
+            use_end_at = datetime.datetime.now()
+
+            minute = (use_end_at.timestamp() - log.use_start_at.timestamp()) // 60
+            fee = area.basic_fee + minute * area.fee_per_min
+
+            log.in_use = False
+            log.use_end_lat = use_end_lat
+            log.use_end_lng = use_end_lng
+            log.use_end_at = use_end_at
+            log.fee = fee
+            log.save()
+            # todo: response
+            return Response({"message": "반납성공"})
