@@ -33,12 +33,20 @@ class BoardingLog(models.Model):
         related_name='boarding_logs',
         null=True
     )
-    use_end_lat = models.DecimalField(max_digits=17, decimal_places=14)
-    use_end_lng = models.DecimalField(max_digits=17, decimal_places=14)
+    use_end_lat = models.DecimalField(
+        max_digits=17,
+        decimal_places=14,
+        null=True
+    )
+    use_end_lng = models.DecimalField(
+        max_digits=17,
+        decimal_places=14,
+        null=True
+    )
     use_start_at = models.DateTimeField()
-    use_end_at = models.DateTimeField()
+    use_end_at = models.DateTimeField(null=True)
     in_use = models.BooleanField()
-    fee = models.IntegerField()
+    fee = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
