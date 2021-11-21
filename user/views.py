@@ -1,30 +1,122 @@
 import datetime
 
+from django.db                       import IntegrityError
+from django.contrib.auth             import authenticate, login, logout
+from django.contrib.auth.models      import User
 from rest_framework                  import status, viewsets
 from rest_framework.response         import Response
 from rest_framework.decorators       import action
 from rest_framework.permissions      import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
-
-from django.db                       import IntegrityError
-from django.contrib.auth             import authenticate, login, logout
-from django.contrib.auth.models      import User
+from drf_spectacular.utils           import extend_schema, OpenApiExample, extend_schema_view
 
 from area.models                     import Area
 from user.serializers                import UserSerializer
-from vehicle.serializers             import BoardingLogSerializer
+from vehicle.serializers             import BoardingLogSerializer, DeerLendSerializer, DeerReturnSerializer
 from vehicle.models                  import Deer, BoardingLog
 
 
+@extend_schema_view(
+    create=extend_schema(
+				tags=['회원'], 
+				description='회원 가입을 합니다',
+                request=UserSerializer,
+                examples=[
+                    OpenApiExample(
+                    request_only=True,
+                    summary='회원가입 예시',
+                    name='success_example',
+                    value={
+                        'username': 'deer',
+                        'password': 'deer',
+                    }
+                ),            
+                OpenApiExample(
+                    response_only=True,
+                    summary='회원가입 성공 예시',
+                    name='success_example',
+                    value={
+                        'id': 1,
+                        'username': 'deer',
+                        'token': '145d0f4acecb91074b93b64bf7f218822f381b22'
+                    },            
+                )]  
+    ),
+    login=extend_schema(
+				tags=['회원'], 
+				description='로그인을 합니다.',
+                request=UserSerializer,
+                examples=[
+                    OpenApiExample(
+                    request_only=True,
+                    summary='로그인 예시',
+                    name='success_example',
+                    value={
+                        'username': 'deer',
+                        'password': 'deer',
+                    },            
+                ),
+                OpenApiExample(
+                    response_only=True,
+                    summary='로그인 성공 예시',
+                    name='success_example',
+                    value={
+                        'id': 1,
+                        'username': 'deer',
+                        'token': '145d0f4acecb91074b93b64bf7f218822f381b22'
+                    },            
+                )]            
+            ),
+    logout=extend_schema(
+				tags=['회원'], 
+				description='로그아웃을 합니다.',
+                request=None,
+                responses=None,
+        ),
+    return_deer=extend_schema(
+                methods=['POST'],
+				tags=['Deer'], 
+				description='Deer 반납을 합니다.',
+                responses=BoardingLogSerializer,
+                request=DeerReturnSerializer,
+                examples=[
+                    OpenApiExample(
+                    request_only=True,
+                    summary='반납 예시',
+                    name='success_example',
+                    value={
+                        'deer_name': 'deer1',
+                        'use_end_lat': 37.52259182560556,
+                        'use_end_lng': 127.01317164880014
+                    }
+                )]
+        ),
+        land_deer=extend_schema(
+                methods=['POST'],
+				tags=['Deer'], 
+				description='Deer 대여를 합니다.',
+                request=DeerLendSerializer,
+                responses=BoardingLogSerializer,
+                examples=[
+                    OpenApiExample(
+                    request_only=True,
+                    summary='대여 예시',
+                    name='success_example',
+                    value={
+                        'deer_name': 'deer1',
+                    }
+                )]		    
+        )
+)
 class UserViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated(), ]
+    permission_classes = [IsAuthenticated, ]
+    serializer_class   = UserSerializer
 
     def get_permissions(self):
         if self.action in ('create', 'login'):
             return [AllowAny(), ]
-        return self.permission_classes
+        return  [permission() for permission in self.permission_classes]
 
     def create(self, request):
         """
@@ -76,23 +168,14 @@ class UserViewSet(viewsets.GenericViewSet):
         logout(request)
         return Response()
 
-    @action(detail=True, methods=['POST', 'DELETE'])
-    def deer(self, request, pk):
+    @action(detail=False, methods=['POST'])
+    def land_deer(self, request):
         """
-        대여: POST /users/{user_id}/deer/
+        대여: POST /users/lend_deer/
             data params
             - deer_name
-
-        반납: DELETE /users/{user_id}/deer/
-            data params
-            - deer_name
-            - use_end_lat
-            - use_end_lng
         """
-        # authorization validate
-        if int(pk) != request.user.id:
-            return Response({"error": "Not Authorized"}, status=status.HTTP_403_FORBIDDEN)
-
+ 
         # deer_name validate
         deer_name = request.data.get('deer_name')
         try:
@@ -100,62 +183,76 @@ class UserViewSet(viewsets.GenericViewSet):
         except Deer.DoesNotExist:
             return Response({"error": f"deer_name:{deer_name} does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if request.method == "POST":
+        is_user_already_use = BoardingLog.objects.filter(
+            in_use=True,
+            user=request.user
+        ).exists()
+        is_deer_already_use = BoardingLog.objects.filter(
+            in_use=True,
+            deer=deer
+        ).exists()
 
-            is_user_already_use = BoardingLog.objects.filter(
+        # 대여가능 상태 validate
+        if is_user_already_use or is_deer_already_use:
+            return Response({"error": "user or deer already use"}, status=status.HTTP_400_BAD_REQUEST)
+
+        log = BoardingLog.objects.create(
+            user=request.user,
+            deer=deer,
+            in_use=True,
+            use_start_at=datetime.datetime.now()
+        )
+
+        return Response(BoardingLogSerializer(log).data, status=status.HTTP_200_OK)
+
+
+    @action(detail=False, methods=['POST'])
+    def return_deer(self, request):
+        """
+        반납: POST /users/return_deer/
+            data params
+            - deer_name
+            - use_end_lat
+            - use_end_lng
+        """
+ 
+        # deer_name validate
+        deer_name = request.data.get('deer_name')
+        try:
+            deer = Deer.objects.get(name=deer_name)
+        except Deer.DoesNotExist:
+            return Response({"error": f"deer_name:{deer_name} does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if (request.data.get('use_end_lat') is None) or (request.data.get('use_end_lng') is None):
+            return Response({"error": "Location not confirmed"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if request.data.get('use_end_lat') < 0 or request.data.get('use_end_lng')  < 0:
+            return Response({"error": "Invalid value"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        use_end_lat = request.data.get('use_end_lat')
+        use_end_lng = request.data.get('use_end_lng')   
+
+        # 반납 가능한 상태 validate
+        try:
+            log = BoardingLog.objects.get(
                 in_use=True,
-                user=request.user
-            ).exists()
-            is_deer_already_use = BoardingLog.objects.filter(
-                in_use=True,
-                deer=deer
-            ).exists()
-
-            # 대여가능 상태 validate
-            if is_user_already_use or is_deer_already_use:
-                return Response({"error": "user or deer already use"}, status=status.HTTP_400_BAD_REQUEST)
-
-            log = BoardingLog.objects.create(
                 user=request.user,
                 deer=deer,
-                in_use=True,
-                use_start_at=datetime.datetime.now()
             )
+        except BoardingLog.DoesNotExist:
+            return Response({"error": f"user not use deer:{deer_name}"}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response(BoardingLogSerializer(log).data, status=status.HTTP_200_OK)
+        area = Area.objects.get(id=deer.area_id)
+        use_end_at = datetime.datetime.now()
 
-        if request.method == "DELETE":
-            
-            if (request.data.get('use_end_lat') is not None) or (request.data.get('use_end_lng') is not None):
-                return Response({"error": "Location not confirmed"}, status=status.HTTP_400_BAD_REQUEST)
+        minute = (use_end_at.timestamp() - log.use_start_at.timestamp()) // 60
+        fee = area.basic_fee + minute * area.fee_per_min
 
-            if request.data.get('use_end_lat') < 0 or request.data.get('use_end_lng')  < 0:
-                return Response({"error": "Invalid value"}, status=status.HTTP_400_BAD_REQUEST)
-                
-            use_end_lat = request.data.get('use_end_lat')
-            use_end_lng = request.data.get('use_end_lng')   
+        log.in_use = False
+        log.use_end_lat = use_end_lat
+        log.use_end_lng = use_end_lng
+        log.use_end_at = use_end_at
+        log.fee = fee
+        log.save()
 
-            # 반납 가능한 상태 validate
-            try:
-                log = BoardingLog.objects.get(
-                    in_use=True,
-                    user=request.user,
-                    deer=deer,
-                )
-            except BoardingLog.DoesNotExist:
-                return Response({"error": f"user not use deer:{deer_name}"}, status=status.HTTP_400_BAD_REQUEST)
-
-            area = Area.objects.get(id=deer.area_id)
-            use_end_at = datetime.datetime.now()
-
-            minute = (use_end_at.timestamp() - log.use_start_at.timestamp()) // 60
-            fee = area.basic_fee + minute * area.fee_per_min
-
-            log.in_use = False
-            log.use_end_lat = use_end_lat
-            log.use_end_lng = use_end_lng
-            log.use_end_at = use_end_at
-            log.fee = fee
-            log.save()
-
-            return Response(BoardingLogSerializer(log).data, status=status.HTTP_200_OK)
+        return Response(BoardingLogSerializer(log).data, status=status.HTTP_200_OK)
