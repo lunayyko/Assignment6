@@ -2,14 +2,14 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
-class EKScooter(models.Model):
+class Deer(models.Model):
     class Meta:
-        db_table = 'ek_scooter'
+        db_table = 'deer'
 
     area = models.ForeignKey(
         'area.Area',
         on_delete=models.SET_NULL,
-        related_name='ek_scooters',
+        related_name='deers',
         null=True,
     )
     name = models.CharField(max_length=20, unique=True)
@@ -27,8 +27,8 @@ class BoardingLog(models.Model):
         related_name='boarding_logs',
         null=True
     )
-    ek_scooter = models.ForeignKey(
-        'vehicle.EKScooter',
+    deer = models.ForeignKey(
+        'vehicle.Deer',
         on_delete=models.SET_NULL,
         related_name='boarding_logs',
         null=True

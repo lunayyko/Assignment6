@@ -1,25 +1,25 @@
-from rest_framework                  import status, viewsets
-from rest_framework.response         import Response
-from rest_framework.decorators       import action
-from rest_framework.permissions      import IsAuthenticated, AllowAny
+from rest_framework import status, viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 
-from django.db                       import IntegrityError
-from django.contrib.auth             import authenticate, login, logout
-from django.contrib.auth.models      import User
+from django.db import IntegrityError
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 
-
-from user.serializers                import UserSerializer
+from user.serializers import UserSerializer
+from vehicle.models import Deer
 
 
 class UserViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated(),]
+    permission_classes = [IsAuthenticated(), ]
 
     def get_permissions(self):
         if self.action in ('create', 'login'):
-            return [AllowAny(),]
+            return [AllowAny(), ]
         return self.permission_classes
 
     def create(self, request):
@@ -72,5 +72,19 @@ class UserViewSet(viewsets.GenericViewSet):
         logout(request)
         return Response()
 
+    @action(detail=True, methods=['POST', 'DELETE'])
+    def deer(self, request, user_id):
+        """
+        POST: 대여
+        DELETE: 반납
 
+        /users/{user_id}/deer/
+
+        data params:
+        - deer_name:
+        """
+        if request.method == "POST":
+            pass
+        if request.method == "DELETE":
+            pass
 
