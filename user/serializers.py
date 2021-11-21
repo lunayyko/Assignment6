@@ -2,6 +2,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
+from yaml import serializer
 
 from vehicle.models import BoardingLog
 
@@ -16,6 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
             'username',
             'password',
         )
+
+        read_only = ('id',)
 
     def validate_password(self, value):
         return make_password(value)

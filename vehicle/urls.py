@@ -1,12 +1,7 @@
-from django.urls import path, include
-from rest_framework.routers import SimpleRouter
+from django.urls            import path
 
-from vehicle.views import VehicleViewSet
-
-router = SimpleRouter()
-
-router.register('deers', VehicleViewSet, basename='vehicles')
+from vehicle.views          import DeerListView
 
 urlpatterns = [
-    path('', include((router.urls)))
+    path('deers/', DeerListView.as_view()),
 ]
