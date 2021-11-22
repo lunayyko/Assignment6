@@ -258,7 +258,7 @@ forbidden_area_coords (반납금지구역의 경계를 표시하는 위도, 경�
 
 
 ## TIL정리 (Blog)
-- 김태우 :
+- 김태우 : https://velog.io/@burnkim61/프리온보딩-과제-6
 - 고유영 :
 - 박지원 : 
 - 최신혁 :
